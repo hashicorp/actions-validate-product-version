@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+printf "newline_before_metadata v0.5.0\n+ent\n"

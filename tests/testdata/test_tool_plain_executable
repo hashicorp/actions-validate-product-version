@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo test_tool_plain_executable 1.2.3

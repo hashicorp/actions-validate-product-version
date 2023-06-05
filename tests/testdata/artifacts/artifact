@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo artifact 1.0.2+ent

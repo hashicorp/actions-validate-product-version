@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+#
+# Run a tool to extract its reported version.  The tool will be copied to the
+# working directory inherited by this script.
+#
+# supported:
+#   $tool version
+# not supported:
+#    $tool -version
+#    $tool --version
+
+set -euo pipefail
+
+# REPL_CHAR defines the replacement character to substitute into the tool's
+# version output in place of whitespace or special characters.  It is chosen to:
+#   * be a printing character (so it's easy to spot in test output)
+#   * not be a shell-special character such as * or ? (to avoid surprises handling the result)
+#   * not found in SemVer version strings (so the character's presence always indicates an error)
+readonly REPL_CHAR="${REPL_CHAR:-#}"
+
+log()  { echo "$*" 1>&2 ; }
+skip() { log "==> SKIP: $*" ; }
+err()  { log "==> ERROR: $*"; }
+
+ckvars() {
+    if [ -z "${ARTIFACT:-}" ]; then
+        echo "ARTIFACT env var must be set to the path to the artifact(s) to test." 1>&2
+        exit 1
+    fi
+    if [ -z "${EXP_VERSION:-}" ]; then
+        echo "EXP_VERSION env var must be set to the expected version string." 1>&2
+        exit 1
+    fi
+}
+
+# munge the tool's version string to highlight problems.
+# this function is a filter that reads stdin and writes stdout.
+munge_version_str() {
+    tr -C '[:alnum:][:punct:]' "${REPL_CHAR}${REPL_CHAR}"
+}
+
+# test_artifact runs the tool to get version output and checks that the
+# expected version is embedded in the output.  The output is passed to
+# munge_version_str() before comparison.
+test_artifact() {
+    local -r exp_version="$1"
+    local art_path="$2"
+    local output
+
+    case "$art_path" in
+        *.zip)
+            # ASSUME foo.zip contains tool foo
+            unzip -q "$art_path"
+            art_path="${art_path%.zip}"
+            ;;
+
+        *)
+            if ! [ -x "$art_path" ]; then
+                skip "$art_path: not executable; cannot test version."
+                return
+            fi
+            cp "$art_path" .
+            ;;
+    esac
+
+    tool_name="${art_path##*/}"
+    log "==> Testing $tool_name"
+    if ! output="$("./$tool_name" version | munge_version_str)" ; then
+        err "$tool_name: error checking version.  '\$tool version' syntax not supported?"
+        return 1
+    fi
+
+    if ! fgrep "$exp_version" <<< "$output" >/dev/null ; then
+        err "$tool_name: failed to find version in output"
+        log "==> Expected Version"
+        log "$exp_version"
+        log "==> Output (with special characters replaced)"
+        log "$output"
+        return 1
+    fi
+
+    if fgrep "${exp_version}${REPL_CHAR}${REPL_CHAR}" <<< "$output" >/dev/null ; then
+        err "$tool_name: extra newline following version string"
+        log "==> Expected Version"
+        log "$exp_version"
+        log "==> Output (with special characters replaced by '${REPL_CHAR}')"
+        log "$output"
+        return 1
+    fi
+
+    log "==> ${tool_name}: version matches expected string: $EXP_VERSION"
+
+    # cleanup
+    /bin/rm "$tool_name"
+}
+
+main() {
+    local _art
+    local failed=
+
+    if [ -d "$ARTIFACT" ]; then
+        # for directory, test everything inside
+        for _art in ${ARTIFACT}/* ; do
+            if ! test_artifact "$EXP_VERSION" "$_art" ; then
+                failed=true
+            fi
+        done
+    else
+        if !  test_artifact "$EXP_VERSION" "$ARTIFACT" ; then
+            failed=true
+        fi
+    fi
+
+    if [ -n "$failed" ]; then
+        log "Errors detected in version string(s)."
+        return 1
+    fi
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    readonly USAGE="usage:  env EXP_VERSION=... ARTIFACT=... ${0##*/}"
+    ckvars
+    main "$@"
+fi

@@ -1,0 +1,36 @@
+name: 'Validate Product Version'
+description: 'Check that product version output includes expected version string'
+inputs:
+  expected_version:
+    type: string
+    description: 'Expected version string'
+    required: true
+  artifact_path:
+    type: string
+    description: "Path to artifacts to test"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # This assumes that each tool can be run as `$tool version` ("version" is a sub-command).
+    - name: Check artifacts
+      shell: bash
+      env:
+        TEST_DIR: "${{ runner.temp }}/validate-product-version"
+        EXP_VERSION: "${{ inputs.expected_version }}"
+      run: |
+        case "${{ inputs.artifact_path }}" in
+          /*) ARTIFACT="${{ inputs.artifact_path }}" ;; # absolute path used as-is
+          *)  ARTIFACT="$(pwd -P)/${{ inputs.artifact_path }}" ;;
+        esac
+        export ARTIFACT
+
+        if ! [ -e "$ARTIFACT" ]; then
+          echo "::error::$ARTIFACT: artifact path does not exist" 1>&2
+          exit 1
+        fi
+
+        mkdir -p "$TEST_DIR"
+        cd "$TEST_DIR"
+        "${{ github.action_path }}/test-versions"
