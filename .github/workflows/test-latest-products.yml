@@ -1,0 +1,63 @@
+
+name: Test Latest Products
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # test a handful of on-prem tools, they should always pass if they're published
+  test-on-prem:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # run all jobs so we see all failures as soon as possible
+      matrix:
+        tool:
+          - consul
+          - nomad
+          - packer
+          - terraform
+          - vault
+        build:
+          - oss
+          - ent
+        exclude:
+          - { tool: packer,    build: ent }
+          - { tool: terraform, build: ent }
+
+    steps:
+      - name: Fetch Tool
+        run: |
+          # use hc-releases someday when we have a token for installing it
+          version="$(
+            curl --fail --silent --show-error "https://api.releases.hashicorp.com/v1/releases/${{ matrix.tool }}/latest" \
+              | jq --raw-output '.version'
+          )"
+          if [ -z "$version" ] ; then
+            echo "::error::Failed to fetch latest release of tool ${{ matrix.tool }}" >&2
+            exit 1
+          fi
+          if [ "${{ matrix.build }}" = "ent" ]; then
+            version="${version}+ent"
+          fi
+          echo "TOOL_VERSION=$version" >> "$GITHUB_ENV"
+
+          url="$(/usr/bin/printf 'https://releases.hashicorp.com/%s/%s/%s_%s_linux_amd64.zip' \
+            "${{ matrix.tool }}" "$version" "${{ matrix.tool }}" "$version"
+          )"
+          echo "Fetching tool $url"
+          cd "${{ runner.temp }}"
+          curl --fail --silent --show-error -o "${{ matrix.tool }}.zip" "$url"
+          unzip "${{ matrix.tool }}.zip"
+          /bin/ls -l "${{ matrix.tool }}"
+          file "${{ matrix.tool }}"
+          uname -a
+          "./${{ matrix.tool }}" version
+
+      - name: Test Tool
+        uses: hashicorp/actions-validate-product-version@v1
+        with:
+          expected_version: ${{ env.TOOL_VERSION }}
+          artifact_path: ${{ runner.temp }}/${{ matrix.tool }}
