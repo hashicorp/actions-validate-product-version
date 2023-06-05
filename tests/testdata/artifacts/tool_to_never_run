@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# this script should not be executable, and the tester should therefore not run it.
+/bin/false
