@@ -68,6 +68,17 @@ setup_file() {
     bats_run --separate-stderr -- test_artifact "$EXP_VERSION" "$ARTIFACT"
 }
 
+@test "plain_executable_no_version" {
+    tool_name="test_tool_plain_executable_no_version"
+
+    source test-versions
+    export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="0.0.0" # EXP_VERSION unused but must be set
+    cd "$BATS_TEST_TMPDIR"
+
+    bats_run --separate-stderr -1 -- test_artifact "$EXP_VERSION" "$ARTIFACT"
+    grep -i -F 'failed to extract version' <<< "$stderr"
+}
+
 @test "zip_artifact" {
     tool_name="test_tool_from_zip"
 
