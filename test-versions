@@ -2,12 +2,6 @@
 #
 # Run a tool to extract its reported version.  The tool will be copied to the
 # working directory inherited by this script.
-#
-# supported:
-#   $tool version
-# not supported:
-#    $tool -version
-#    $tool --version
 
 set -euo pipefail
 
@@ -45,7 +39,6 @@ munge_version_str() {
 test_artifact() {
     local -r exp_version="$1"
     local art_path="$2"
-    local output
 
     case "$art_path" in
         *.zip)
@@ -65,10 +58,25 @@ test_artifact() {
 
     tool_name="${art_path##*/}"
     log "==> Testing $tool_name"
-    if ! output="$("./$tool_name" version | munge_version_str)" ; then
-        err "$tool_name: error checking version.  '\$tool version' syntax not supported?"
+
+    ## start with `--version` because vagrant supports that and a subcommand, and the subcommand
+    ## checks (via network) if the local version is the latest, which we don't want.
+    local output
+    local param
+    for param in '--version' '-version' 'version' ; do
+        if output="$("./$tool_name" "$param" 2>&1 | munge_version_str)"
+        then
+            break
+        fi
+    done
+
+    if [ -z "$output" ]; then
+        err "$tool_name: failed to extract version with parameter and subcommand."
+        err "Expected \`$tool_name version\` or \`$tool_name --version\` to report the tool version."
         return 1
     fi
+
+    # test version output
 
     if ! grep -F "$exp_version" <<< "$output" >/dev/null ; then
         err "$tool_name: failed to find version in output"

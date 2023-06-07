@@ -38,11 +38,31 @@ setup_file() {
     [ "$(printf "1.2.3-dev\n+ent\n" | munge_version_str)" = "1.2.3-dev${REPL_CHAR}+ent${REPL_CHAR}" ]
 }
 
-@test "plain_executable" {
+@test "plain_executable_subcommand" {
     tool_name="test_tool_plain_executable"
 
     source test-versions
     export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="1.2.3"
+    cd "$BATS_TEST_TMPDIR"
+
+    bats_run --separate-stderr -- test_artifact "$EXP_VERSION" "$ARTIFACT"
+}
+
+@test "plain_executable_dash_parameter" {
+    tool_name="test_tool_plain_executable-version"
+
+    source test-versions
+    export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="1.2.5"
+    cd "$BATS_TEST_TMPDIR"
+
+    bats_run --separate-stderr -- test_artifact "$EXP_VERSION" "$ARTIFACT"
+}
+
+@test "plain_executable_dashdash_parameter" {
+    tool_name="test_tool_plain_executable--version"
+
+    source test-versions
+    export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="1.2.4"
     cd "$BATS_TEST_TMPDIR"
 
     bats_run --separate-stderr -- test_artifact "$EXP_VERSION" "$ARTIFACT"
