@@ -43,7 +43,7 @@ test_artifact() {
     case "$art_path" in
         *.zip)
             # ASSUME foo.zip contains tool foo
-            unzip -q "$art_path"
+            unzip -o -q "$art_path"
             art_path="${art_path%.zip}"
             ;;
 
