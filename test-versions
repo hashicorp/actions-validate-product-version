@@ -70,7 +70,7 @@ test_artifact() {
         return 1
     fi
 
-    if ! fgrep "$exp_version" <<< "$output" >/dev/null ; then
+    if ! grep -F "$exp_version" <<< "$output" >/dev/null ; then
         err "$tool_name: failed to find version in output"
         log "==> Expected Version"
         log "$exp_version"
@@ -79,7 +79,7 @@ test_artifact() {
         return 1
     fi
 
-    if fgrep "${exp_version}${REPL_CHAR}${REPL_CHAR}" <<< "$output" >/dev/null ; then
+    if grep -F "${exp_version}${REPL_CHAR}${REPL_CHAR}" <<< "$output" >/dev/null ; then
         err "$tool_name: extra newline following version string"
         log "==> Expected Version"
         log "$exp_version"
@@ -100,7 +100,7 @@ main() {
 
     if [ -d "$ARTIFACT" ]; then
         # for directory, test everything inside
-        for _art in ${ARTIFACT}/* ; do
+        for _art in "${ARTIFACT}"/* ; do
             if ! test_artifact "$EXP_VERSION" "$_art" ; then
                 failed=true
             fi
@@ -118,6 +118,7 @@ main() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # shellcheck disable=SC2034
     readonly USAGE="usage:  env EXP_VERSION=... ARTIFACT=... ${0##*/}"
     ckvars
     main "$@"
