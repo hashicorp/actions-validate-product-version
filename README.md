@@ -12,6 +12,11 @@ Currently supported artifact types:
    * `foo` -- executable to be run as-is
 Other non-executable artifacts are skipped.
 
+## Supported Product Builds
+
+Supported builds are enumerated in [supported_builds.json](./supported_builds.json)
+(separated by license class for simpler maintenance of the file).
+
 
 ## Usage
 

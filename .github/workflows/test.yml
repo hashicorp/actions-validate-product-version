@@ -32,13 +32,22 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
 
       - name: Run Test Suite
-        run: bats ./tests/test-versions.bats
+        run: bats --recursive ./tests/
 
   test-relative:
     runs-on: ubuntu-latest
     needs: [ 'test-suite' ]
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      # include the test tool in the supported builds data.
+      # filter through jq to validate JSON before writing the file.
+      - name: Support Test Tool
+        run: |
+          echo '[{"build":"oss","tool":"test_tool_plain_executable"}]' \
+            | jq --compact-output \
+            | tee ./supported_builds.json
+
       # Test with relative path
       - name: Run Action (relative path)
         uses: hashicorp/actions-validate-product-version@v1
@@ -52,6 +61,15 @@ jobs:
     needs: [ 'test-suite' ]
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      # include the test tool in the supported builds data.
+      # filter through jq to validate JSON before writing the file.
+      - name: Support Test Tool
+        run: |
+          echo '[{"build":"oss","tool":"test_tool_plain_executable"}]' \
+            | jq --compact-output \
+            | tee ./supported_builds.json
+
       # Test with absolute path
       - name: Copy Test Tool to Absolute Path
         id: copy_tool
@@ -63,3 +81,41 @@ jobs:
           expected_version: '1.2.3'
           # this path is relative to the action path
           artifact_path: ${{ runner.temp }}/test_tool_plain_executable
+
+  # test against something on the releases site that is not expected to ever pass.
+  # terraform-provider-fastly is chosen arbitrarily within this category.
+  test-unsupported-product:
+    runs-on: ubuntu-latest
+    needs: [ 'test-suite' ]
+    env:
+      PRODUCT: terraform-provider-fastly
+    steps:
+      - name: Check latest tool version
+        run: |
+          url="https://api.releases.hashicorp.com/v1/releases/${{ env.PRODUCT }}/latest"
+          echo "::debug::Checking latest version of ${PRODUCT}: $url"
+          version="$(
+            curl --fail --silent --show-error "$url" \
+              | jq --raw-output '.version'
+          )"
+          if [ -z "$version" ] ; then
+            echo "::error Failed to fetch latest release of tool [$PRODUCT]" >&2
+            exit 1
+          fi
+          echo "EXP_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Run Action (expected to fail)
+        id: test-version
+        continue-on-error: true
+        uses: hashicorp/actions-validate-product-version@v1
+        with:
+          expected_version: ${{ env.EXP_VERSION }}
+          # the action should fail before executing the artifact
+          artifact_path: /bin/false
+
+      - name: Check Result
+        if: contains(fromJSON('["success", "failure"]'), steps.test-version.outcome)
+        run: |
+          # invert error from previous step (expected to fail)
+          echo "::debug::result: [${{ steps.test-version.outcome }}]"
+          [ "${{ steps.test-version.outcome }}" = 'failure' ]
