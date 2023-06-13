@@ -42,11 +42,11 @@ jobs:
 
 ### Inputs
 
-| Input              | Description                                            |
-| ------------------ | ------------------------------------------------------ |
-| `expected_version` | The version the `artifact` expected to declare         |
-| `artifact_path`    | The path to the artifact to test (may be a directory)  |
-
+| Input              | Description                                           |
+| ------------------ | ----------------------------------------------------- |
+| `expected_version` | The version the `artifact` expected to declare        |
+| `artifact_path`    | The path to the artifact to test (may be a directory) |
+| `soft_fail`        | If non-empty, unsupported product error is non-fatal  |
 
 ## Development
 

@@ -9,6 +9,10 @@ inputs:
     type: string
     description: "Path to artifacts to test"
     required: true
+  soft_fail:
+    type: string
+    # this input should only be set by CRT workflows or internal tests
+    description: 'If non-empty, lack of support is not a fatal error'
 
 runs:
   using: "composite"
@@ -26,7 +30,7 @@ runs:
 
         if [ "$supported" != 'true' ] ; then
           echo "::error ${tool} is not supported by this action." 1>&2
-          exit 1
+          [ -n "${{ inputs.soft_fail }}" ] && exit 0 # exit 1 if soft_fail unset
         fi
 
     - name: Check Artifact

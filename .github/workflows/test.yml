@@ -119,3 +119,42 @@ jobs:
           # invert error from previous step (expected to fail)
           echo "::debug::result: [${{ steps.test-version.outcome }}]"
           [ "${{ steps.test-version.outcome }}" = 'failure' ]
+
+  # test against something on the releases site that is not expected to ever pass.
+  # terraform-provider-fastly is chosen arbitrarily within this category.
+  test-soft-fail:
+    runs-on: ubuntu-latest
+    needs: [ 'test-suite' ]
+    env:
+      PRODUCT: terraform-provider-fastly
+    steps:
+      - name: Check latest tool version
+        run: |
+          url="https://api.releases.hashicorp.com/v1/releases/${{ env.PRODUCT }}/latest"
+          echo "::debug::Checking latest version of ${PRODUCT}: $url"
+          version="$(
+            curl --fail --silent --show-error "$url" \
+              | jq --raw-output '.version'
+          )"
+          if [ -z "$version" ] ; then
+            echo "::error Failed to fetch latest release of tool [$PRODUCT]" >&2
+            exit 1
+          fi
+          echo "EXP_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Run Action (expected to fail)
+        id: test-version
+        continue-on-error: true
+        uses: hashicorp/actions-validate-product-version@v1
+        with:
+          expected_version: ${{ env.EXP_VERSION }}
+          # the action should fail before executing the artifact
+          artifact_path: /bin/false
+          soft_fail: enabled
+
+      - name: Check Result
+        if: contains(fromJSON('["success", "failure"]'), steps.test-version.outcome)
+        run: |
+          # invert error from previous step (expected to fail)
+          echo "::debug::result: [${{ steps.test-version.outcome }}]"
+          [ "${{ steps.test-version.outcome }}" = 'success' ]
