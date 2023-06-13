@@ -1,0 +1,27 @@
+[
+    { "build": "oss", "tool": "consul" },
+    { "build": "oss", "tool": "consul-dataplane" },
+    { "build": "oss", "tool": "consul-esm" },
+    { "build": "oss", "tool": "consul-k8s" },
+    { "build": "oss", "tool": "consul-telemetry-collector" },
+    { "build": "oss", "tool": "consul-template" },
+    { "build": "oss", "tool": "envconsul" },
+    { "build": "oss", "tool": "hc-install" },
+    { "build": "oss", "tool": "hcdiag" },
+    { "build": "oss", "tool": "levant" },
+    { "build": "oss", "tool": "nomad" },
+    { "build": "oss", "tool": "nomad-autoscaler" },
+    { "build": "oss", "tool": "packer" },
+    { "build": "oss", "tool": "sentinel" },
+    { "build": "oss", "tool": "terraform" },
+    { "build": "oss", "tool": "terraform-ls" },
+    { "build": "oss", "tool": "vault" },
+    { "build": "oss", "tool": "vault-benchmark" },
+    { "build": "oss", "tool": "vlt" },
+    { "build": "oss", "tool": "waypoint" },
+
+    { "build": "ent", "tool": "consul" },
+    { "build": "ent", "tool": "nomad" },
+    { "build": "ent", "tool": "nomad-autoscaler" },
+    { "build": "ent", "tool": "vault" }
+]

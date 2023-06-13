@@ -64,9 +64,15 @@ test_artifact() {
     local output
     local param
     for param in '--version' '-version' 'version' ; do
+        log "parameter: $param"
+        # combine stdout+stderr because different tools report on different streams
         if output="$("./$tool_name" "$param" 2>&1 | munge_version_str)"
         then
             break
+        else
+            log "error output:"
+            log "$output"
+            output=''
         fi
     done
 

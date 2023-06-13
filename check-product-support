@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# check if a product is supported (listed in the json file)
+
+set -euo pipefail
+
+: "${SUPPORT_JSON:=supported_builds.json}"
+
+log()  { echo "$*" 1>&2 ; }
+
+check() {
+    local tool="$1"
+    local supported
+
+    if [ -e "$SUPPORT_JSON" ]; then
+        tool="${tool##*/}" # strip path
+        tool="${tool%.zip}" # ignore .zip suffix (.zip extraction supported)
+        supported="$(
+            jq --raw-output --arg tool "$tool" '
+            .[]
+            | select(.tool == $tool)
+            | .tool
+            ' < supported_builds.json
+        )"
+        echo "${supported:+true}"
+        exit 0
+    else
+        log "::warning $SUPPORT_JSON: supported product data file not found"
+    fi
+    echo 'false'
+}
+
+usage() {
+    cat <<EOF
+usage:  "${0##*/}" <tool>
+
+Checks the specified tool against the supported builds data
+to determine if the build is supported.
+EOF
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    case "${1:-}" in
+        '')
+            usage ; exit 1 ;;
+        '-h'|'--help')
+            usage ; exit 0 ;;
+        *)
+            check "$@" ;;
+    esac
+fi
