@@ -1,4 +1,4 @@
-# actions-validate-product-version
+# actions-validate-product-version [![Heimdall](https://heimdall.hashicorp.services/api/v1/assets/actions-validate-product-version/badge.svg?key=98716f4b798468ebe4476c1129058744d9e218c50a3c5cd23ac06d42a54d171f)](https://heimdall.hashicorp.services/site/assets/actions-validate-product-version) [![CI](https://github.com/hashicorp/actions-validate-product-version/actions/workflows/test.yml/badge.svg)](https://github.com/hashicorp/actions-validate-product-version/actions/workflows/test.yml)
 
 Given an expected version string,
 check that the tool emits a matching version string.
