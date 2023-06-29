@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+case "$1" in
+    '--version'|'-version'|'version')
+        echo "unrecognized parameter: $1" >&2
+        exit 1
+esac
+
+# this shouldn't happen, signal with sentinel exit code
+echo "this test tool is being misused" >&2
+exit 20

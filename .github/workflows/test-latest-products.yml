@@ -1,0 +1,80 @@
+
+name: Test Latest Products
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  load-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      supported: ${{ steps.load-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
+      - name: Load Supported Product Build Matrix
+        id: load-matrix
+        run: echo "matrix=$(jq --compact-output < supported_builds.json)" >> "$GITHUB_OUTPUT"
+
+  test-on-prem:
+    runs-on: ubuntu-latest
+    needs: ['load-matrix']
+    strategy:
+      fail-fast: false # run all jobs so we see all failures as soon as possible
+      matrix:
+        include: ${{ fromJSON( needs.load-matrix.outputs.supported ) }}
+    steps:
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Fetch Tool
+        run: |
+          url="https://api.releases.hashicorp.com/v1/releases/${{ matrix.tool }}/latest"
+          echo "::debug::Checking latest version of ${{ matrix.tool }}: $url"
+          version="$(
+            curl --fail --silent --show-error "$url" \
+              | jq --raw-output '.version'
+          )"
+          if [ -z "$version" ] ; then
+            echo "::error Failed to fetch latest release of tool ${{ matrix.tool }}" >&2
+            exit 1
+          fi
+          if [ "${{ matrix.build }}" = "ent" ]; then
+            version="${version}+ent"
+          fi
+          echo "TOOL_VERSION=$version" >> "$GITHUB_ENV"
+          echo "tool version: $version"
+
+          host_os="$(uname -s)"
+          host_os="${host_os,,}"
+          host_arch="$(uname -m)"
+          host_arch="${host_arch,,}"
+          if [ "$host_arch" = 'x86_64' ]; then host_arch=amd64 ; fi
+
+          blob="$(curl --fail --silent --show-error "https://api.releases.hashicorp.com/v1/releases/${{ matrix.tool }}/${version}")"
+          url="$(jq --raw-output --arg os "$host_os" --arg arch "$host_arch" '
+                .builds[]
+                | select( .os == $os and .arch == $arch )
+                | .url
+              ' <<< "$blob"
+          )"
+
+          echo "Fetching tool from [$url]"
+          (
+            cd "${{ runner.temp }}"
+            curl --fail --silent --show-error -o "./${{ matrix.tool }}.zip" "$url"
+            unzip -o "${{ matrix.tool }}.zip"
+          )
+
+      - name: Test Tool
+        uses: hashicorp/actions-validate-product-version@v1
+        with:
+          expected_version: ${{ env.TOOL_VERSION }}
+          artifact_path: ${{ runner.temp }}/${{ matrix.tool }}
+
+      # use latest local commit; useful in local testing
+      #- uses: ./
+      #  with:
+      #    expected_version: ${{ env.TOOL_VERSION }}
+      #    artifact_path: ${{ runner.temp }}/${{ matrix.tool }}.zip
