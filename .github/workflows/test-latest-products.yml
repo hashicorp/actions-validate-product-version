@@ -17,7 +17,7 @@ jobs:
 
       - name: Load Supported Product Build Matrix
         id: load-matrix
-        run: echo "matrix=$(tr '\n' ' ' < supported_builds.json | tr -s ' ' )" >> "$GITHUB_OUTPUT"
+        run: echo "matrix=$(jq --compact-output < supported_builds.json)" >> "$GITHUB_OUTPUT"
 
   test-on-prem:
     runs-on: ubuntu-latest
