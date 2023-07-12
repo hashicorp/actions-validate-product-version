@@ -21,6 +21,9 @@ runs:
     - name: Check Product Support
       id: check-product-support
       shell: bash
+      env:
+        # Let the support checker know where to find the supported builds data
+        SUPPORT_JSON: "${{ github.action_path }}/supported_builds.json"
       run: |
         tool="${{ inputs.artifact_path }}"
         tool="${tool##*/}"
