@@ -19,7 +19,7 @@ check() {
             .[]
             | select(.tool == $tool)
             | .tool
-            ' < supported_builds.json
+            ' < "$SUPPORT_JSON"
         )"
         echo "${supported:+true}"
         exit 0
