@@ -29,10 +29,9 @@ runs:
         tool="${tool##*/}"
         supported="$(${{ github.action_path }}/check-product-support "${{ inputs.artifact_path }}")"
         echo "supported=$supported" > "$GITHUB_OUTPUT"
-        echo "::debug::output: $supported"
 
         if [ "$supported" != 'true' ] ; then
-          echo "::error ${tool} is not supported by this action." 1>&2
+          echo "Tool is not supported by this action." 1>&2
           [ -n "${{ inputs.soft_fail }}" ] && exit 0 # exit 1 if soft_fail unset
         fi
 
@@ -43,19 +42,21 @@ runs:
         TEST_DIR: "${{ runner.temp }}/validate-product-version"
         EXP_VERSION: "${{ inputs.expected_version }}"
       run: |
-        echo "::debug::testing ${{ inputs.artifact_path }} version"
+        echo "::group::setup"
+        echo "testing ${{ inputs.artifact_path }}"
         case "${{ inputs.artifact_path }}" in
           /*) ARTIFACT="${{ inputs.artifact_path }}" ;; # absolute path used as-is
           *)  ARTIFACT="$(pwd -P)/${{ inputs.artifact_path }}" ;;
         esac
         export ARTIFACT
-        echo "::debug::ARTIFACT=$ARTIFACT"
+        echo "ARTIFACT=$ARTIFACT"
 
         if ! [ -e "$ARTIFACT" ]; then
-          echo "::error $ARTIFACT: artifact path does not exist" 1>&2
+          echo "::error $ARTIFACT: artifact path does not exist"
           exit 1
         fi
 
         mkdir -p "$TEST_DIR"
         cd "$TEST_DIR"
+        echo "::endgroup::"
         "${{ github.action_path }}/test-versions"
