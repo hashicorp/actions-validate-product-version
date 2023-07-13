@@ -38,13 +38,17 @@ munge_version_str() {
 # munge_version_str() before comparison.
 test_artifact() {
     local -r exp_version="$1"
-    local art_path="$2"
+    local -r art_path="$2"
 
-    case "$art_path" in
+    local tool_name="${art_path##*/}"
+    case "$tool_name" in
         *.zip)
             # ASSUME foo.zip contains tool foo
             unzip -o -q "$art_path"
-            art_path="${art_path%.zip}"
+            tool_name="${tool_name%.zip}"
+            # Strip everything after first `_` in name to match binary names convention.
+            # But strip the directory first in case it includes `_`.
+            tool_name="${tool_name%%_*}"
             ;;
 
         *)
@@ -52,12 +56,11 @@ test_artifact() {
                 skip "$art_path: not executable; cannot test version."
                 return
             fi
-            cp "$art_path" .
+            cp -v "$art_path" .
             ;;
     esac
 
-    tool_name="${art_path##*/}"
-    log "==> Testing $tool_name"
+    log "==> Testing [${art_path##*/}] as [$tool_name]"
 
     ## start with `--version` because vagrant supports that and a subcommand, and the subcommand
     ## checks (via network) if the local version is the latest, which we don't want.

@@ -9,20 +9,31 @@ bats_require_minimum_version 1.5.0
 # This must be in the current shell, so it cannot be within a bats setup* function.
 eval "$(echo -n 'bats_run()' ; declare -f run | tail -n +2)"
 
-@test "tool supported" {
+setup() {
     source check-product-support
-    bats_run -- check consul
+}
+
+@test "tool supported" {
+    bats_run --separate-stderr -- check consul
     [ "$output" = 'true' ]
 }
 
 @test "tool.zip supported" {
-    source check-product-support
-    bats_run -- check consul.zip
+    bats_run --separate-stderr -- check consul_1.2.3_darwin_arm64.zip
     [ "$output" = 'true' ]
 }
 
 @test "tool unsupported" {
-    source check-product-support
-    bats_run -- check no-such-tool
+    bats_run --separate-stderr -- check no-such-tool
     [ "$output" != 'true' ]
+}
+
+@test "directory of artifacts: unsupported" {
+    bats_run --separate-stderr -- main "tests/testdata/support/unsupported"
+    [ "$output" != 'true' ]
+}
+
+@test "directory of artifacts: supported" {
+    bats_run --separate-stderr -- main "tests/testdata/support/supported"
+    [ "$output" != 'false' ]
 }
