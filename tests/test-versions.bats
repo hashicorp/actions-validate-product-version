@@ -14,10 +14,11 @@ setup_file() {
 }
 
 #setup() { env | grep BATS | sort ; }
+setup() {
+    source test-versions
+}
 
 @test "required env vars" {
-    source test-versions
-
     bats_run -1 -- ckvars
     [[ "$output" =~ 'ARTIFACT env var must be set' ]]
 
@@ -30,8 +31,6 @@ setup_file() {
 }
 
 @test "munge_version_str" {
-    source test-versions
-
     [ "$(printf "1.2.3" | munge_version_str)" = '1.2.3' ]
     [ "$(printf "1.2.3\n" | munge_version_str)" = "1.2.3${REPL_CHAR}" ]
     [ "$(printf "1.2.3-dev~1_1+ent.abc.123\n" | munge_version_str)" = "1.2.3-dev~1_1+ent.abc.123${REPL_CHAR}" ]
@@ -40,8 +39,6 @@ setup_file() {
 
 @test "plain_executable_subcommand" {
     tool_name="test_tool_plain_executable"
-
-    source test-versions
     export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="1.2.3"
     cd "$BATS_TEST_TMPDIR"
 
@@ -50,8 +47,6 @@ setup_file() {
 
 @test "plain_executable_dash_parameter" {
     tool_name="test_tool_plain_executable-version"
-
-    source test-versions
     export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="1.2.5"
     cd "$BATS_TEST_TMPDIR"
 
@@ -60,8 +55,6 @@ setup_file() {
 
 @test "plain_executable_dashdash_parameter" {
     tool_name="test_tool_plain_executable--version"
-
-    source test-versions
     export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="1.2.4"
     cd "$BATS_TEST_TMPDIR"
 
@@ -70,8 +63,6 @@ setup_file() {
 
 @test "plain_executable_no_version" {
     tool_name="test_tool_plain_executable_no_version"
-
-    source test-versions
     export ARTIFACT="${TD_DIR}/${tool_name}" EXP_VERSION="0.0.0" # EXP_VERSION unused but must be set
     cd "$BATS_TEST_TMPDIR"
 
@@ -81,8 +72,6 @@ setup_file() {
 
 @test "zip_artifact" {
     tool_name="test_tool_from_zip"
-
-    source test-versions
     export ARTIFACT="${TD_DIR}/${tool_name}.zip" EXP_VERSION="1.0.0"
     cd "$BATS_TEST_TMPDIR"
 
@@ -90,7 +79,6 @@ setup_file() {
 }
 
 @test "artifacts" {
-    source test-versions
     export ARTIFACT="${TD_DIR}/artifacts"  EXP_VERSION="1.0.2+ent"
     cd "$BATS_TEST_TMPDIR"
 
@@ -98,7 +86,6 @@ setup_file() {
 }
 
 @test "extra_trailing_newline" {
-    source test-versions
     export ARTIFACT="${TD_DIR}/extra_trailing_newline" EXP_VERSION="1.1.1"
     cd "$BATS_TEST_TMPDIR"
 
@@ -106,7 +93,6 @@ setup_file() {
 }
 
 @test "newline_before_metadata" {
-    source test-versions
     export ARTIFACT="${TD_DIR}/newline_before_metadata" EXP_VERSION="0.5.0+ent"
     cd "$BATS_TEST_TMPDIR"
 
