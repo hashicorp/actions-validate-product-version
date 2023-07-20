@@ -11,22 +11,46 @@ check() {
     local tool="$1"
     local supported
 
+    log "artifact to check: $tool"
     if [ -e "$SUPPORT_JSON" ]; then
         tool="${tool##*/}" # strip path
         tool="${tool%.zip}" # ignore .zip suffix (.zip extraction supported)
+        tool="${tool%%_*}" # strip everything after the first `_` to get tool name
+        log "tool name to match: $tool"
         supported="$(
             jq --raw-output --arg tool "$tool" '
             .[]
             | select(.tool == $tool)
             | .tool
-            ' < supported_builds.json
+            ' < "$SUPPORT_JSON"
         )"
-        echo "${supported:+true}"
-        exit 0
     else
         log "::warning $SUPPORT_JSON: supported product data file not found"
     fi
-    echo 'false'
+
+    case "$supported" in
+        '') echo 'false' ;;
+        *) echo 'true' ;;
+    esac
+}
+
+# Handle directory by grabbing something within.  Any single thing thing should
+# be sufficient, as we don't support mixing multiple products' build artifacts
+# in one dir.
+check_dir() {
+    local dir="$1"
+    # Note that the artifact is not executed or installed; only the name matters here.
+    # Filter with *_* because "real" artifacts include `_`.  We can't test with something
+    # like README.md
+    check "$(find "$dir" -name '*_*' | head -n 1)"
+}
+
+main() {
+    if [ -d "$1" ]; then
+        check_dir "$1"
+    else
+        check "$1"
+    fi
 }
 
 usage() {
@@ -45,6 +69,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         '-h'|'--help')
             usage ; exit 0 ;;
         *)
-            check "$@" ;;
+            main "$@" ;;
     esac
 fi
