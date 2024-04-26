@@ -1,7 +1,9 @@
 ---
 schema: 1.1
+partition: release-engineering
+category: github-action
 summary:
-  owner: team-rel-eng
+  owner: team-selfmanaged-releng
   description: |
     actions-validate-product-version is a GitHub Action that verifies that a product
     returns the expected version.
