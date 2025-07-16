@@ -13,7 +13,7 @@ jobs:
     outputs:
       supported: ${{ steps.load-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Load Supported Product Build Matrix
         id: load-matrix
@@ -27,7 +27,7 @@ jobs:
       matrix:
         include: ${{ fromJSON( needs.load-matrix.outputs.supported ) }}
     steps:
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Fetch Tool
         run: |
           url="https://api.releases.hashicorp.com/v1/releases/${{ matrix.tool }}/latest"
