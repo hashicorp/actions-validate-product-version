@@ -44,13 +44,13 @@ jobs:
       # filter through jq to validate JSON before writing the file.
       - name: Support Test Tool
         run: |
-          echo '[{"build":"oss","tool":"test_tool_plain_executable"}]' \
+          echo '[{"build":"oss","tool":"test"}]' \
             | jq --compact-output \
             | tee ./supported_builds.json
 
       # Test with relative path
       - name: Run Action (relative path)
-        uses: hashicorp/actions-validate-product-version@v1
+        uses: ./
         with:
           expected_version: '1.2.3'
           # this path is relative to the action path
@@ -66,7 +66,7 @@ jobs:
       # filter through jq to validate JSON before writing the file.
       - name: Support Test Tool
         run: |
-          echo '[{"build":"oss","tool":"test_tool_plain_executable"}]' \
+          echo '[{"build":"oss","tool":"test"}]' \
             | jq --compact-output \
             | tee ./supported_builds.json
 
@@ -74,13 +74,13 @@ jobs:
       - name: Copy Test Tool to Absolute Path
         id: copy_tool
         run: |
-          cp ./tests/testdata/test_tool_plain_executable "${{ runner.temp }}/test_tool_plain_executable"
+          cp ./tests/testdata/test_tool_plain_executable "${{ runner.temp }}/test"
       - name: Run Action (absolute path)
-        uses: hashicorp/actions-validate-product-version@v1
+        uses: ./
         with:
           expected_version: '1.2.3'
           # this path is relative to the action path
-          artifact_path: ${{ runner.temp }}/test_tool_plain_executable
+          artifact_path: ${{ runner.temp }}/test
 
   # test against something on the releases site that is not expected to ever pass.
   # terraform-provider-fastly is chosen arbitrarily within this category.
