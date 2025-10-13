@@ -5,15 +5,12 @@ name: 'Validate Product Version'
 description: 'Check that product version output includes expected version string'
 inputs:
   expected_version:
-    type: string
     description: 'Expected version string'
     required: true
   artifact_path:
-    type: string
     description: "Path to artifacts to test"
     required: true
   soft_fail:
-    type: string
     # this input should only be set by CRT workflows or internal tests
     description: 'If non-empty, lack of support is not a fatal error'
 
