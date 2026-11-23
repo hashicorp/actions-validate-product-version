@@ -54,6 +54,8 @@ jobs:
 act --container-architecture=linux/amd64 --workflows .github/workflows/test.yml
 ```
 
+Running `act` requires Docker to be installed and running.
+
 ### Release Process
 
 1. Commit your changes, open a PR, get it reviewed, and merge to `main`.
